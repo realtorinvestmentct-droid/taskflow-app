@@ -1,0 +1,667 @@
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b12;
+  color: #ebeaf6;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* =========================
+   App Layout
+   ========================= */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #0b0b12;
+  color: #ebeaf6;
+}
+
+.sidebar {
+  width: 220px;
+  background: #12131c;
+  border-right: 1px solid #262842;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+
+/* =========================
+   Sidebar
+   ========================= */
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 24px 18px 18px;
+  border-bottom: 1px solid #262842;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #7767f8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #7f84a6;
+}
+
+.nav-section {
+  padding: 16px 12px 0;
+}
+
+.nav-label {
+  margin-bottom: 10px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #7f84a6;
+}
+
+.nav-btn {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  color: #c8cae3;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+  background: #1d1d33;
+  color: white;
+}
+
+.nav-badge {
+  background: #242742;
+  color: #aeb3d8;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  font-size: 12px;
+  color: #7f84a6;
+  border-top: 1px solid #262842;
+}
+
+/* =========================
+   Topbar
+   ========================= */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.topbar p {
+  margin: 8px 0 0;
+  color: #7f84a6;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   Buttons
+   ========================= */
+
+.ghost-btn,
+.primary-btn,
+.ghost-small,
+.hold-btn,
+.done-btn,
+.danger-btn,
+.transfer-btn {
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ghost-btn,
+.ghost-small,
+.transfer-btn {
+  background: transparent;
+  border: 1px solid #323556;
+  color: #d4d7f5;
+}
+
+.primary-btn {
+  background: #7767f8;
+  color: white;
+  border: 1px solid #7767f8;
+}
+
+.hold-btn {
+  background: rgba(255, 149, 72, 0.12);
+  color: #ff9548;
+  border: 1px solid rgba(255, 149, 72, 0.35);
+}
+
+.done-btn {
+  background: rgba(65, 226, 164, 0.12);
+  color: #41e2a4;
+  border: 1px solid rgba(65, 226, 164, 0.35);
+}
+
+.danger-btn {
+  background: rgba(255, 107, 125, 0.08);
+  color: #ff6b7d;
+  border: 1px solid rgba(255, 107, 125, 0.45);
+}
+
+/* =========================
+   Panels
+   ========================= */
+
+.panel {
+  background: #141521;
+  border: 1px solid #262842;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.wide-panel {
+  margin-top: 0;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.panel-title {
+  margin-bottom: 18px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.empty-dashboard {
+  padding: 18px 4px 6px;
+  color: #7f84a6;
+  font-size: 14px;
+}
+
+/* =========================
+   Search
+   ========================= */
+
+.search-panel {
+  background: #141521;
+  border: 1px solid #262842;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.search {
+  width: 320px;
+  max-width: 100%;
+  background: #1b1d2d;
+  color: #ebeaf6;
+  border: 1px solid #323556;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* =========================
+   Table
+   ========================= */
+
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  max-height: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  border-bottom: 1px solid #242742;
+}
+
+th {
+  padding: 12px 10px;
+  color: #7f84a6;
+  font-size: 12px;
+}
+
+td {
+  padding: 14px 10px;
+  color: #ebeaf6;
+}
+
+/* Keep action columns usable */
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 170px;
+}
+
+.actions button {
+  white-space: nowrap;
+}
+
+/* Fallback widths for normal tables */
+th:last-child,
+td:last-child {
+  width: 180px;
+}
+
+/* =========================
+   Resizable Task List Columns
+   ========================= */
+
+.resizable-th {
+  position: relative;
+  padding-right: 18px;
+}
+
+.resize-handle {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 12px;
+  height: calc(100% - 12px);
+  cursor: col-resize;
+  user-select: none;
+  z-index: 2;
+}
+
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 5px;
+  width: 2px;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(120, 140, 255, 0.38);
+}
+
+.resize-handle:hover::after {
+  background: rgba(120, 140, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(120, 140, 255, 0.18);
+}
+
+/* =========================
+   Chips
+   ========================= */
+
+.client-chip,
+.period-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.client-chip {
+  color: #dbe4ff;
+  background: #27304a;
+}
+
+.client-efes {
+  background: rgba(61, 130, 255, 0.22);
+  color: #5ea2ff;
+}
+
+.client-bake {
+  background: rgba(176, 123, 255, 0.22);
+  color: #c48cff;
+}
+
+.client-aygun {
+  background: rgba(65, 226, 164, 0.18);
+  color: #41e2a4;
+}
+
+.period-chip {
+  background: #23263c;
+}
+
+.period-weekly {
+  background: rgba(61, 130, 255, 0.22);
+  color: #5ea2ff;
+}
+
+.period-monthly {
+  background: rgba(176, 123, 255, 0.22);
+  color: #c48cff;
+}
+
+.period-quarterly {
+  background: rgba(244, 195, 57, 0.18);
+  color: #f4c339;
+}
+
+.period-annual {
+  background: rgba(255, 107, 125, 0.18);
+  color: #ff7b8b;
+}
+
+/* =========================
+   Inputs
+   ========================= */
+
+.due-date-input,
+.modal-input {
+  width: 100%;
+  background: #1b1d2d;
+  color: #ebeaf6;
+  border-radius: 10px;
+  outline: none;
+}
+
+.due-date-input {
+  border: 1px solid rgba(120, 140, 255, 0.25);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.due-date-input:focus {
+  border-color: rgba(120, 140, 255, 0.55);
+}
+
+.modal-input {
+  border: 1px solid #323556;
+  padding: 12px 14px;
+}
+
+/* =========================
+   Modal
+   ========================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  width: 520px;
+  max-width: 100%;
+  background: #141521;
+  border: 1px solid #323556;
+  border-radius: 18px;
+  padding: 28px;
+}
+
+.modal h2 {
+  margin: 0 0 8px;
+}
+
+.modal p {
+  margin: 0 0 18px;
+  color: #7f84a6;
+}
+
+.modal label {
+  display: block;
+  margin-top: 14px;
+  margin-bottom: 8px;
+  color: #cdd1ec;
+  font-size: 14px;
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* =========================
+   Legacy utility blocks kept
+   ========================= */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: #141521;
+  border: 1px solid #262842;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.kpi-label {
+  color: #7f84a6;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.kpi-value {
+  font-size: 50px;
+  font-weight: 700;
+}
+
+.kpi-sub {
+  margin-top: 10px;
+  color: #6e7397;
+  font-size: 13px;
+}
+
+.kpi-card.purple .kpi-value {
+  color: #8b81ff;
+}
+
+.kpi-card.blue .kpi-value {
+  color: #69a3ff;
+}
+
+.kpi-card.orange .kpi-value {
+  color: #ff9548;
+}
+
+.kpi-card.green .kpi-value {
+  color: #41e2a4;
+}
+
+.week-strip {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.week-day {
+  width: 64px;
+  text-align: center;
+  background: #141521;
+  border: 1px solid #262842;
+  border-radius: 10px;
+  padding: 10px 6px;
+  color: #cdd1ec;
+  font-size: 12px;
+}
+
+.week-day strong {
+  display: block;
+  font-size: 34px;
+  margin: 2px 0 6px;
+  color: white;
+}
+
+.week-day span {
+  color: #7f84a6;
+  font-size: 11px;
+}
+
+.week-day.active {
+  border-color: #7767f8;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+  color: #cdd1ec;
+}
+
+.bar-track {
+  height: 6px;
+  background: #242742;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.blue-fill {
+  background: #69a3ff;
+}
+
+.purple-fill {
+  background: #b07bff;
+}
+
+.yellow-fill {
+  background: #f4c339;
+}
+
+.red-fill {
+  background: #ff6b7d;
+}
+
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.client-row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #242742;
+}
+
+/* =========================
+   Responsive
+   ========================= */
+
+@media (max-width: 1000px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .topbar {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+  }
+}
