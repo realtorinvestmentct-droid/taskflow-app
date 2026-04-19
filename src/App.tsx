@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-type Period = "Weekly" | "Monthly" | "Quarterly" | "Annual";
+type Workflow =
+  | "Admin & Compliance"
+  | "Account Payable"
+  | "Payroll"
+  | "Bookkeeping Cycles"
+  | "Property Management"
+  | "Marketing (CRM)";
+
+type Cadence =
+  | "Weekly"
+  | "Monthly"
+  | "Quarterly"
+  | "Semi Annual"
+  | "Annual"
+  | "Custom";
+
+type DueDateAdjustment = "None" | "Next Business Day" | "Previous Business Day";
+
 type ViewName =
   | "dashboard"
   | "task-list"
@@ -10,144 +27,140 @@ type ViewName =
   | "tasks-weekly"
   | "tasks-monthly"
   | "tasks-quarterly"
-  | "tasks-annual";
+  | "tasks-semi-annual"
+  | "tasks-annual"
+  | "tasks-custom";
 
 type Status = "Not Started" | "In Progress" | "On Hold" | "Completed";
+
+type TaskCategory =
+  | "Utilities"
+  | "Insurance"
+  | "Tax & Government"
+  | "Licenses & Certificates"
+  | "Legal & Compliance"
+  | "Prepare & Generate Payroll"
+  | "Payroll Tax Payments"
+  | "File Payroll Reports"
+  | "Bookkeeping Cycles"
+  | "Financial Reports";
+
+type ClientName =
+  | "Efes Produce"
+  | "Bake Fusion"
+  | "Aygun Market"
+  | "732 Washington"
+  | "795 Savin"
+  | "797 Savin";
 
 type Task = {
   id: string;
   seriesKey: string;
-  client: string;
+  workflow: Workflow;
+  category: TaskCategory;
+  client: ClientName;
   title: string;
   due: string;
-  period: Period;
+  cadence: Cadence;
+  customDays?: number;
+  dueDateAdjustment: DueDateAdjustment;
   comments: string;
   status: Status;
   completedAt?: string;
   createdAt: string;
+  updatedAt?: string;
 };
 
-const STORAGE_KEY = "taskflow_engine_v2";
+const STORAGE_KEY = "taskflow_engine_v3_final";
 
-const seedTasks: Task[] = [
-  createSeedTask({
-    id: "1",
-    client: "Efes Produce",
-    title: "Payroll Mate: Generate paystubs",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "In Progress",
-  }),
-  createSeedTask({
-    id: "2",
-    client: "Efes Produce",
-    title: "PDF: Employee paystubs exported",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "In Progress",
-  }),
-  createSeedTask({
-    id: "3",
-    client: "Efes Produce",
-    title: "PDF: Federal Deposit Requirement",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "In Progress",
-  }),
-  createSeedTask({
-    id: "4",
-    client: "Efes Produce",
-    title: "Excel: State tax report file prepared",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "In Progress",
-  }),
-  createSeedTask({
-    id: "5",
-    client: "Efes Produce",
-    title: "Payroll Mate: Backup completed",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "In Progress",
-  }),
-  createSeedTask({
-    id: "6",
-    client: "Bake Fusion",
-    title: "Payroll Mate: Generate paystubs",
-    due: "2026-04-09",
-    period: "Weekly",
-    comments: "",
-    status: "Not Started",
-  }),
-  createSeedTask({
-    id: "7",
-    client: "Bake Fusion",
-    title: "PDF: Federal Deposit Requirement",
-    due: "2026-04-10",
-    period: "Monthly",
-    comments: "",
-    status: "Not Started",
-  }),
-  createSeedTask({
-    id: "8",
-    client: "Aygun Market",
-    title: "Excel: State tax report file prepared",
-    due: "2026-04-10",
-    period: "Quarterly",
-    comments: "",
-    status: "On Hold",
-  }),
-  createSeedTask({
-    id: "9",
-    client: "Aygun Market",
-    title: "MyconneCT: State tax payment submitted",
-    due: "2026-04-10",
-    period: "Monthly",
-    comments: "",
-    status: "Not Started",
-  }),
-  createSeedTask({
-    id: "10",
-    client: "Efes Produce",
-    title: "MyconneCT: State tax payment submitted",
-    due: "2026-04-09",
-    period: "Annual",
-    comments: "",
-    status: "Completed",
-  }),
+const WORKFLOWS: Workflow[] = [
+  "Admin & Compliance",
+  "Account Payable",
+  "Payroll",
+  "Bookkeeping Cycles",
+  "Property Management",
+  "Marketing (CRM)",
 ];
 
-const emptyTask = {
-  client: "",
+const CATEGORIES: TaskCategory[] = [
+  "Utilities",
+  "Insurance",
+  "Tax & Government",
+  "Licenses & Certificates",
+  "Legal & Compliance",
+  "Prepare & Generate Payroll",
+  "Payroll Tax Payments",
+  "File Payroll Reports",
+  "Bookkeeping Cycles",
+  "Financial Reports",
+];
+
+const CLIENTS: ClientName[] = [
+  "Efes Produce",
+  "Bake Fusion",
+  "Aygun Market",
+  "732 Washington",
+  "795 Savin",
+  "797 Savin",
+];
+
+const CADENCES: Cadence[] = [
+  "Weekly",
+  "Monthly",
+  "Quarterly",
+  "Semi Annual",
+  "Annual",
+  "Custom",
+];
+
+const ADJUSTMENTS: DueDateAdjustment[] = [
+  "None",
+  "Next Business Day",
+  "Previous Business Day",
+];
+
+const seedTasks: Task[] = [];
+
+type TaskForm = Omit<Task, "id" | "seriesKey" | "createdAt" | "updatedAt" | "completedAt">;
+
+const emptyTask: TaskForm = {
+  workflow: "Payroll",
+  category: "Prepare & Generate Payroll",
+  client: "Efes Produce",
   title: "",
   due: "",
-  period: "Weekly" as Period,
+  cadence: "Weekly",
+  customDays: 30,
+  dueDateAdjustment: "None",
   comments: "",
-  status: "Not Started" as Status,
+  status: "Not Started",
 };
 
 function sortTasks(tasks: Task[]) {
-  const periodOrder: Record<Period, number> = {
+  const cadenceOrder: Record<Cadence, number> = {
     Weekly: 1,
     Monthly: 2,
     Quarterly: 3,
-    Annual: 4,
+    "Semi Annual": 4,
+    Annual: 5,
+    Custom: 6,
   };
 
   return [...tasks].sort((a, b) => {
     const dueCompare = a.due.localeCompare(b.due);
     if (dueCompare !== 0) return dueCompare;
 
-    const periodCompare = periodOrder[a.period] - periodOrder[b.period];
-    if (periodCompare !== 0) return periodCompare;
+    const workflowCompare = a.workflow.localeCompare(b.workflow);
+    if (workflowCompare !== 0) return workflowCompare;
+
+    const categoryCompare = a.category.localeCompare(b.category);
+    if (categoryCompare !== 0) return categoryCompare;
 
     const clientCompare = a.client.localeCompare(b.client);
     if (clientCompare !== 0) return clientCompare;
+
+    const cadenceCompare = cadenceOrder[a.cadence] - cadenceOrder[b.cadence];
+    if (cadenceCompare !== 0) return cadenceCompare;
 
     return a.title.localeCompare(b.title);
   });
@@ -158,77 +171,50 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewName>("dashboard");
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [form, setForm] = useState(emptyTask);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [form, setForm] = useState<TaskForm>(emptyTask);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [workflowFilter, setWorkflowFilter] = useState<Workflow | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState<TaskCategory | "All">("All");
+  const [clientFilter, setClientFilter] = useState<ClientName | "All">("All");
+  const [statusFilter, setStatusFilter] = useState<Status | "All">("All");
 
   const [columnWidths, setColumnWidths] = useState({
     index: 60,
-    client: 150,
-    title: 360,
-    due: 120,
-    period: 110,
-    actions: 150,
+    workflow: 190,
+    category: 190,
+    client: 160,
+    title: 330,
+    due: 130,
+    cadence: 130,
+    status: 130,
+    actions: 220,
   });
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
 
-const totalTasks = tasks.length;
-const onHoldCount = tasks.filter((t) => t.status === "On Hold").length;
-const completedCount = tasks.filter((t) => t.status === "Completed").length;
-const weeklyCount = tasks.filter((t) => t.period === "Weekly").length;
-const monthlyCount = tasks.filter((t) => t.period === "Monthly").length;
-const quarterlyCount = tasks.filter((t) => t.period === "Quarterly").length;
-const annualCount = tasks.filter((t) => t.period === "Annual").length;
+  const totalTasks = tasks.length;
+  const onHoldCount = tasks.filter((t) => t.status === "On Hold").length;
+  const completedCount = tasks.filter((t) => t.status === "Completed").length;
+  const weeklyCount = tasks.filter((t) => t.cadence === "Weekly").length;
+  const monthlyCount = tasks.filter((t) => t.cadence === "Monthly").length;
+  const quarterlyCount = tasks.filter((t) => t.cadence === "Quarterly").length;
+  const semiAnnualCount = tasks.filter((t) => t.cadence === "Semi Annual").length;
+  const annualCount = tasks.filter((t) => t.cadence === "Annual").length;
+  const customCount = tasks.filter((t) => t.cadence === "Custom").length;
 
-const clients = useMemo(() => {
-  const grouped = tasks.reduce<Record<string, number>>((acc, task) => {
-    acc[task.client] = (acc[task.client] || 0) + 1;
-    return acc;
-  }, {});
-  return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-}, [tasks]);
+  const clients = useMemo(() => {
+    const grouped = tasks.reduce<Record<string, number>>((acc, task) => {
+      acc[task.client] = (acc[task.client] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [tasks]);
 
-function formatDisplayDate(dateStr: string) {
-  const [year, month, day] = dateStr.split("-");
-  return `${month}/${day}/${year}`;
-}
-const visibleRows = useMemo(() => {
-  let list = [...tasks];
-
-  if (currentView === "task-list") {
-    list = list.filter(
-      (t) =>
-        t.status !== "Completed" &&
-        t.status !== "On Hold" &&
-        !isThisWeek(t.due)
-    );
-  } else if (currentView === "on-hold") {
-    list = list.filter((t) => t.status === "On Hold");
-  } else if (currentView === "tasks-weekly") {
-    list = list.filter((t) => t.period === "Weekly");
-  } else if (currentView === "tasks-monthly") {
-    list = list.filter((t) => t.period === "Monthly");
-  } else if (currentView === "tasks-quarterly") {
-    list = list.filter((t) => t.period === "Quarterly");
-  } else if (currentView === "tasks-annual") {
-    list = list.filter((t) => t.period === "Annual");
-  }
-
-  if (search.trim()) {
-    const q = search.toLowerCase();
-    list = list.filter(
-      (t) =>
-        t.client.toLowerCase().includes(q) ||
-        t.title.toLowerCase().includes(q) ||
-        t.comments.toLowerCase().includes(q)
-    );
-  }
-
-  return sortTasks(list);
-}, [tasks, currentView, search]);
-
-  const weekPreview = useMemo(() => {
+  const dashboardRows = useMemo(() => {
     return sortTasks(
       tasks.filter(
         (t) =>
@@ -239,58 +225,196 @@ const visibleRows = useMemo(() => {
     );
   }, [tasks]);
 
-  const setField = <K extends keyof typeof emptyTask>(
-    key: K,
-    value: (typeof emptyTask)[K]
-  ) => {
+  const visibleRows = useMemo(() => {
+    let list = [...tasks];
+
+    if (currentView === "task-list") {
+      list = list.filter((t) => t.status !== "Completed");
+    } else if (currentView === "on-hold") {
+      list = list.filter((t) => t.status === "On Hold");
+    } else if (currentView === "tasks-weekly") {
+      list = list.filter((t) => t.cadence === "Weekly" && t.status !== "Completed");
+    } else if (currentView === "tasks-monthly") {
+      list = list.filter((t) => t.cadence === "Monthly" && t.status !== "Completed");
+    } else if (currentView === "tasks-quarterly") {
+      list = list.filter((t) => t.cadence === "Quarterly" && t.status !== "Completed");
+    } else if (currentView === "tasks-semi-annual") {
+      list = list.filter((t) => t.cadence === "Semi Annual" && t.status !== "Completed");
+    } else if (currentView === "tasks-annual") {
+      list = list.filter((t) => t.cadence === "Annual" && t.status !== "Completed");
+    } else if (currentView === "tasks-custom") {
+      list = list.filter((t) => t.cadence === "Custom" && t.status !== "Completed");
+    }
+
+    if (workflowFilter !== "All") {
+      list = list.filter((t) => t.workflow === workflowFilter);
+    }
+
+    if (categoryFilter !== "All") {
+      list = list.filter((t) => t.category === categoryFilter);
+    }
+
+    if (clientFilter !== "All") {
+      list = list.filter((t) => t.client === clientFilter);
+    }
+
+    if (statusFilter !== "All") {
+      list = list.filter((t) => t.status === statusFilter);
+    }
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.workflow.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q) ||
+          t.client.toLowerCase().includes(q) ||
+          t.title.toLowerCase().includes(q) ||
+          t.comments.toLowerCase().includes(q) ||
+          t.cadence.toLowerCase().includes(q) ||
+          t.status.toLowerCase().includes(q)
+      );
+    }
+
+    return sortTasks(list);
+  }, [
+    tasks,
+    currentView,
+    workflowFilter,
+    categoryFilter,
+    clientFilter,
+    statusFilter,
+    search,
+  ]);
+
+  const setField = <K extends keyof TaskForm>(key: K, value: TaskForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-const addTask = () => {
-  if (!form.client.trim() || !form.title.trim() || !form.due) return;
-
-  const task: Task = {
-    id: createId(),
-    seriesKey: makeSeriesKey(form.client, form.title, form.period),
-    client: form.client.trim(),
-    title: form.title.trim(),
-    due: form.due,
-    period: form.period,
-    comments: form.comments.trim(),
-    status: "Not Started",
-    createdAt: new Date().toISOString(),
+  const resetForm = () => {
+    setForm(emptyTask);
+    setEditingId(null);
   };
 
-  setTasks((prev) => sortTasks([...prev, task]));
-  setForm(emptyTask);
-  setShowAddModal(false);
-};
+  const addTask = () => {
+    if (!form.title.trim() || !form.due) return;
+    if (form.cadence === "Custom" && (!form.customDays || form.customDays < 1)) return;
+
+    const trimmedTitle = form.title.trim();
+
+    const task: Task = {
+      id: createId(),
+      seriesKey: makeSeriesKey({
+        workflow: form.workflow,
+        category: form.category,
+        client: form.client,
+        title: trimmedTitle,
+        cadence: form.cadence,
+        customDays: form.customDays,
+        dueDateAdjustment: form.dueDateAdjustment,
+      }),
+      workflow: form.workflow,
+      category: form.category,
+      client: form.client,
+      title: trimmedTitle,
+      due: applyDueDateAdjustment(form.due, form.dueDateAdjustment),
+      cadence: form.cadence,
+      customDays: form.cadence === "Custom" ? form.customDays : undefined,
+      dueDateAdjustment: form.dueDateAdjustment,
+      comments: form.comments.trim(),
+      status: isThisWeek(form.due) ? "In Progress" : "Not Started",
+      createdAt: new Date().toISOString(),
+    };
+
+    setTasks((prev) => sortTasks([...prev, task]));
+    resetForm();
+    setShowAddModal(false);
+  };
+
+  const openEditModal = (task: Task) => {
+    setEditingId(task.id);
+    setForm({
+      workflow: task.workflow,
+      category: task.category,
+      client: task.client,
+      title: task.title,
+      due: task.due,
+      cadence: task.cadence,
+      customDays: task.customDays ?? 30,
+      dueDateAdjustment: task.dueDateAdjustment,
+      comments: task.comments,
+      status: task.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !form.title.trim() || !form.due) return;
+    if (form.cadence === "Custom" && (!form.customDays || form.customDays < 1)) return;
+
+    setTasks((prev) =>
+      sortTasks(
+        prev.map((task) => {
+          if (task.id !== editingId) return task;
+
+          const due = applyDueDateAdjustment(form.due, form.dueDateAdjustment);
+
+          return {
+            ...task,
+            workflow: form.workflow,
+            category: form.category,
+            client: form.client,
+            title: form.title.trim(),
+            due,
+            cadence: form.cadence,
+            customDays: form.cadence === "Custom" ? form.customDays : undefined,
+            dueDateAdjustment: form.dueDateAdjustment,
+            comments: form.comments.trim(),
+            status: form.status,
+            seriesKey: makeSeriesKey({
+              workflow: form.workflow,
+              category: form.category,
+              client: form.client,
+              title: form.title.trim(),
+              cadence: form.cadence,
+              customDays: form.customDays,
+              dueDateAdjustment: form.dueDateAdjustment,
+            }),
+            updatedAt: new Date().toISOString(),
+          };
+        })
+      )
+    );
+
+    resetForm();
+    setShowEditModal(false);
+  };
 
   const moveToOnHold = (id: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "On Hold" } : t))
+      prev.map((t) =>
+        t.id === id
+          ? { ...t, status: "On Hold", updatedAt: new Date().toISOString() }
+          : t
+      )
     );
   };
 
-const moveToActive = (id: string) => {
-  const today = formatDate(new Date());
-
-  setTasks((prev) =>
-    sortTasks(
-      prev.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              due: today,
-              status: "In Progress",
-            }
-          : t
+  const moveToActive = (id: string) => {
+    setTasks((prev) =>
+      sortTasks(
+        prev.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                status: isThisWeek(t.due) ? "In Progress" : "Not Started",
+                updatedAt: new Date().toISOString(),
+              }
+            : t
+        )
       )
-    )
-  );
-
-  setCurrentView("dashboard");
-};
+    );
+  };
 
   const completeTask = (id: string) => {
     setTasks((prev) => {
@@ -303,17 +427,18 @@ const moveToActive = (id: string) => {
               ...t,
               status: "Completed" as Status,
               completedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             }
           : t
       );
 
-      const nextDue = addPeriod(task.due, task.period);
+      const nextDue = getNextDueDate(task);
 
       const nextExists = updated.some(
         (t) =>
           t.seriesKey === task.seriesKey &&
           t.due === nextDue &&
-          t.period === task.period
+          t.status !== "Completed"
       );
 
       if (nextExists) return sortTasks(updated);
@@ -321,10 +446,14 @@ const moveToActive = (id: string) => {
       const nextTask: Task = {
         id: createId(),
         seriesKey: task.seriesKey,
+        workflow: task.workflow,
+        category: task.category,
         client: task.client,
         title: task.title,
         due: nextDue,
-        period: task.period,
+        cadence: task.cadence,
+        customDays: task.customDays,
+        dueDateAdjustment: task.dueDateAdjustment,
         comments: task.comments,
         status: isThisWeek(nextDue) ? "In Progress" : "Not Started",
         createdAt: new Date().toISOString(),
@@ -340,49 +469,67 @@ const moveToActive = (id: string) => {
 
   const updateDueDate = (id: string, due: string) => {
     setTasks((prev) =>
-      sortTasks(prev.map((t) => (t.id === id ? { ...t, due } : t)))
+      sortTasks(
+        prev.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                due: applyDueDateAdjustment(due, t.dueDateAdjustment),
+                updatedAt: new Date().toISOString(),
+              }
+            : t
+        )
+      )
     );
   };
 
-const startResize = (
-  column: keyof typeof columnWidths,
-  startX: number
-) => {
-  const startWidth = columnWidths[column];
+  const startResize = (
+    column: keyof typeof columnWidths,
+    startX: number
+  ) => {
+    const startWidth = columnWidths[column];
 
-  const onMouseMove = (e: MouseEvent) => {
-    const nextWidth = Math.max(60, startWidth + (e.clientX - startX));
-    setColumnWidths((prev) => ({
-      ...prev,
-      [column]: nextWidth,
-    }));
+    const onMouseMove = (e: MouseEvent) => {
+      const nextWidth = Math.max(60, startWidth + (e.clientX - startX));
+      setColumnWidths((prev) => ({
+        ...prev,
+        [column]: nextWidth,
+      }));
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   };
-
-  const onMouseUp = () => {
-    window.removeEventListener("mousemove", onMouseMove);
-    window.removeEventListener("mouseup", onMouseUp);
-  };
-
-  window.addEventListener("mousemove", onMouseMove);
-  window.addEventListener("mouseup", onMouseUp);
-};
 
   const exportCSV = () => {
     const headers = [
+      "Workflow",
+      "Category",
       "Client",
       "Job Title",
       "Due",
-      "Period",
+      "Cadence",
+      "Custom Days",
+      "Due Date Adjustment",
       "Comments",
       "Status",
       "Series Key",
     ];
 
     const rows = tasks.map((task) => [
+      task.workflow,
+      task.category,
       task.client,
       task.title,
       task.due,
-      task.period,
+      task.cadence,
+      task.customDays ?? "",
+      task.dueDateAdjustment,
       task.comments,
       task.status,
       task.seriesKey,
@@ -418,32 +565,42 @@ const startResize = (
       ? "Monthly"
       : currentView === "tasks-quarterly"
       ? "Quarterly"
-      : "Annual";
+      : currentView === "tasks-semi-annual"
+      ? "Semi Annual"
+      : currentView === "tasks-annual"
+      ? "Annual"
+      : "Custom";
 
   const pageSubtitle =
     currentView === "dashboard"
-      ? "This week’s working area driven by the master task list"
+      ? "This week’s active work across all workflows"
       : currentView === "task-list"
-      ? "Master repository sorted by due date"
+      ? "Master repository with filters and editing"
       : currentView === "on-hold"
       ? "Tasks currently paused"
       : currentView === "clients"
       ? "Client overview from the master task list"
-      : "Filtered view from the master task list";
+      : "Filtered task view";
 
-  const clientClass = (client: string) => {
+  const workflowClass = (workflow: Workflow) =>
+    `workflow-chip workflow-${slugify(workflow)}`;
+
+  const categoryClass = (category: TaskCategory) =>
+    `category-chip category-${slugify(category)}`;
+
+  const clientClass = (client: ClientName) => {
     if (client === "Efes Produce") return "client-chip client-efes";
     if (client === "Bake Fusion") return "client-chip client-bake";
     if (client === "Aygun Market") return "client-chip client-aygun";
-    return "client-chip";
+    if (client === "732 Washington") return "client-chip client-property";
+    if (client === "795 Savin") return "client-chip client-property";
+    return "client-chip client-property";
   };
 
-  const periodClass = (period: Period) => {
-    if (period === "Weekly") return "period-chip period-weekly";
-    if (period === "Monthly") return "period-chip period-monthly";
-    if (period === "Quarterly") return "period-chip period-quarterly";
-    return "period-chip period-annual";
-  };
+  const cadenceClass = (cadence: Cadence) =>
+    `period-chip period-${slugify(cadence)}`;
+
+  const statusClass = (status: Status) => `status-chip status-${slugify(status)}`;
 
   return (
     <div className="app-shell">
@@ -492,7 +649,7 @@ const startResize = (
         </div>
 
         <div className="nav-section">
-          <div className="nav-label">MASTER LIST</div>
+          <div className="nav-label">BY CADENCE</div>
 
           <button
             className={`nav-btn ${currentView === "tasks-weekly" ? "active" : ""}`}
@@ -506,7 +663,7 @@ const startResize = (
             className={`nav-btn ${currentView === "tasks-monthly" ? "active" : ""}`}
             onClick={() => setCurrentView("tasks-monthly")}
           >
-            <span>🗓️ Monthly</span>
+            <span>🗓 Monthly</span>
             <span className="nav-badge">{monthlyCount}</span>
           </button>
 
@@ -519,11 +676,27 @@ const startResize = (
           </button>
 
           <button
+            className={`nav-btn ${currentView === "tasks-semi-annual" ? "active" : ""}`}
+            onClick={() => setCurrentView("tasks-semi-annual")}
+          >
+            <span>◐ Semi Annual</span>
+            <span className="nav-badge">{semiAnnualCount}</span>
+          </button>
+
+          <button
             className={`nav-btn ${currentView === "tasks-annual" ? "active" : ""}`}
             onClick={() => setCurrentView("tasks-annual")}
           >
             <span>📋 Annual</span>
             <span className="nav-badge">{annualCount}</span>
+          </button>
+
+          <button
+            className={`nav-btn ${currentView === "tasks-custom" ? "active" : ""}`}
+            onClick={() => setCurrentView("tasks-custom")}
+          >
+            <span>⚙ Custom</span>
+            <span className="nav-badge">{customCount}</span>
           </button>
         </div>
 
@@ -534,8 +707,8 @@ const startResize = (
             <span>＋ Add Task</span>
           </button>
 
-          <button className="nav-btn" onClick={() => setCurrentView("dashboard")}>
-            <span>↻ Refresh Week</span>
+          <button className="nav-btn" onClick={exportCSV}>
+            <span>↓ Export CSV</span>
           </button>
         </div>
 
@@ -550,116 +723,150 @@ const startResize = (
             <h1>{pageTitle}</h1>
             <p>{pageSubtitle}</p>
           </div>
-
-          <div className="topbar-actions">
-            <button className="ghost-btn" onClick={exportCSV}>
-              ↓ Export CSV
-            </button>
-          </div>
         </div>
+
+        {currentView !== "clients" && (
+          <div className="search-panel">
+            <input
+              className="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tasks..."
+            />
+
+            <select
+              className="filter-select"
+              value={workflowFilter}
+              onChange={(e) => setWorkflowFilter(e.target.value as Workflow | "All")}
+            >
+              <option value="All">All Workflows</option>
+              {WORKFLOWS.map((workflow) => (
+                <option key={workflow} value={workflow}>
+                  {workflow}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="filter-select"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as TaskCategory | "All")}
+            >
+              <option value="All">All Categories</option>
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="filter-select"
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value as ClientName | "All")}
+            >
+              <option value="All">All Clients</option>
+              {CLIENTS.map((client) => (
+                <option key={client} value={client}>
+                  {client}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as Status | "All")}
+            >
+              <option value="All">All Statuses</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        )}
 
         {currentView === "dashboard" ? (
           <div className="panel wide-panel">
-            <div className="panel-header">
-              <div className="panel-title">🗓 This Week — Active Tasks</div>
-              <button
-                className="ghost-small"
-                onClick={() => setCurrentView("task-list")}
-              >
-                View all →
-              </button>
+            <div className="panel-title">This Week — Active Tasks</div>
+
+            <div className="table-wrap">
+              <table>
+                <colgroup>
+                  <col style={{ width: columnWidths.workflow }} />
+                  <col style={{ width: columnWidths.category }} />
+                  <col style={{ width: columnWidths.client }} />
+                  <col style={{ width: columnWidths.title }} />
+                  <col style={{ width: columnWidths.due }} />
+                  <col style={{ width: columnWidths.cadence }} />
+                  <col style={{ width: columnWidths.status }} />
+                  <col style={{ width: columnWidths.actions }} />
+                </colgroup>
+
+                <thead>
+                  <tr>
+                    <th>Workflow</th>
+                    <th>Category</th>
+                    <th>Client</th>
+                    <th>Job Title</th>
+                    <th>Due</th>
+                    <th>Cadence</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {dashboardRows.map((task) => (
+                    <tr key={task.id}>
+                      <td>
+                        <span className={workflowClass(task.workflow)}>
+                          {task.workflow}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={categoryClass(task.category)}>
+                          {task.category}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={clientClass(task.client)}>{task.client}</span>
+                      </td>
+                      <td>{task.title}</td>
+                      <td>{formatDisplayDate(task.due)}</td>
+                      <td>
+                        <span className={cadenceClass(task.cadence)}>
+                          {task.cadence}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={statusClass(task.status)}>{task.status}</span>
+                      </td>
+                      <td className="actions">
+                        <button className="ghost-small" onClick={() => openEditModal(task)}>
+                          Edit
+                        </button>
+                        <button className="hold-btn" onClick={() => moveToOnHold(task.id)}>
+                          On Hold
+                        </button>
+                        <button className="done-btn" onClick={() => completeTask(task.id)}>
+                          Done
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {dashboardRows.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: "center", padding: 18 }}>
+                        No active tasks due this week.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-
-            {weekPreview.length > 0 ? (
-<div className="table-wrap">
-  <table>
-    <colgroup>
-      <col style={{ width: columnWidths.client }} />
-      <col style={{ width: columnWidths.title }} />
-      <col style={{ width: columnWidths.due }} />
-      <col style={{ width: columnWidths.period }} />
-      <col style={{ width: columnWidths.actions }} />
-    </colgroup>
-
-    <thead>
-      <tr>
-        <th className="resizable-th">
-          Client
-          <span
-            className="resize-handle"
-            onMouseDown={(e) => startResize("client", e.clientX)}
-          />
-        </th>
-        <th className="resizable-th">
-          Job Title
-          <span
-            className="resize-handle"
-            onMouseDown={(e) => startResize("title", e.clientX)}
-          />
-        </th>
-        <th className="resizable-th">
-          Due
-          <span
-            className="resize-handle"
-            onMouseDown={(e) => startResize("due", e.clientX)}
-          />
-        </th>
-        <th className="resizable-th">
-          Period
-          <span
-            className="resize-handle"
-            onMouseDown={(e) => startResize("period", e.clientX)}
-          />
-        </th>
-        <th className="resizable-th">
-          Actions
-          <span
-            className="resize-handle"
-            onMouseDown={(e) => startResize("actions", e.clientX)}
-          />
-        </th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {weekPreview.map((task) => (
-        <tr key={task.id}>
-          <td>
-            <span className={clientClass(task.client)}>
-              {task.client}
-            </span>
-          </td>
-          <td>{task.title}</td>
-          <td>{formatDisplayDate(task.due)}</td>
-          <td>
-            <span className={periodClass(task.period)}>
-              {task.period}
-            </span>
-          </td>
-          <td className="actions">
-            <button
-              className="hold-btn"
-              onClick={() => moveToOnHold(task.id)}
-            >
-              On Hold
-            </button>
-            <button
-              className="done-btn"
-              onClick={() => completeTask(task.id)}
-            >
-              Done
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-            ) : (
-              <div className="empty-dashboard">
-                No active tasks for this week.
-              </div>
-            )}
           </div>
         ) : currentView === "clients" ? (
           <div className="panel wide-panel">
@@ -670,193 +877,271 @@ const startResize = (
                   <tr>
                     <th>Client</th>
                     <th>Total Tasks</th>
+                    <th>Active</th>
+                    <th>On Hold</th>
+                    <th>Completed</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clients.map(([client, count]) => (
-                    <tr key={client}>
-                      <td>
-                        <span className={clientClass(client)}>{client}</span>
-                      </td>
-                      <td>{count}</td>
-                    </tr>
-                  ))}
+                  {CLIENTS.map((client) => {
+                    const clientTasks = tasks.filter((t) => t.client === client);
+                    const active = clientTasks.filter(
+                      (t) => t.status !== "Completed" && t.status !== "On Hold"
+                    ).length;
+                    const onHold = clientTasks.filter((t) => t.status === "On Hold").length;
+                    const completed = clientTasks.filter(
+                      (t) => t.status === "Completed"
+                    ).length;
+
+                    return (
+                      <tr key={client}>
+                        <td>
+                          <span className={clientClass(client)}>{client}</span>
+                        </td>
+                        <td>{clientTasks.length}</td>
+                        <td>{active}</td>
+                        <td>{onHold}</td>
+                        <td>{completed}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
         ) : (
-          <>
-            <div className="search-panel">
-              <input
-                className="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tasks..."
-              />
-            </div>
+          <div className="panel wide-panel">
+            <div className="panel-title">{pageTitle}</div>
+            <div className="table-wrap">
+              <table>
+                <colgroup>
+                  <col style={{ width: columnWidths.index }} />
+                  <col style={{ width: columnWidths.workflow }} />
+                  <col style={{ width: columnWidths.category }} />
+                  <col style={{ width: columnWidths.client }} />
+                  <col style={{ width: columnWidths.title }} />
+                  <col style={{ width: columnWidths.due }} />
+                  <col style={{ width: columnWidths.cadence }} />
+                  <col style={{ width: columnWidths.status }} />
+                  <col style={{ width: columnWidths.actions }} />
+                </colgroup>
 
-            <div className="panel wide-panel">
-              <div className="panel-title">{pageTitle}</div>
-              <div className="table-wrap">
-                <table>
-                  <colgroup>
-                    <col style={{ width: columnWidths.index }} />
-                    <col style={{ width: columnWidths.client }} />
-                    <col style={{ width: columnWidths.title }} />
-                    <col style={{ width: columnWidths.due }} />
-                    <col style={{ width: columnWidths.period }} />
-                    <col style={{ width: columnWidths.actions }} />
-                  </colgroup>
+                <thead>
+                  <tr>
+                    <th className="resizable-th">
+                      #
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("index", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Workflow
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("workflow", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Category
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("category", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Client
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("client", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Job Title
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("title", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Due
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("due", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Cadence
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("cadence", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Status
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("status", e.clientX)}
+                      />
+                    </th>
+                    <th className="resizable-th">
+                      Actions
+                      <span
+                        className="resize-handle"
+                        onMouseDown={(e) => startResize("actions", e.clientX)}
+                      />
+                    </th>
+                  </tr>
+                </thead>
 
-                  <thead>
-                    <tr>
-                      <th className="resizable-th">
-                        #
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("index", e.clientX)}
-                        />
-                      </th>
-                      <th className="resizable-th">
-                        Client
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("client", e.clientX)}
-                        />
-                      </th>
-                      <th className="resizable-th">
-                        Job Title
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("title", e.clientX)}
-                        />
-                      </th>
-                      <th className="resizable-th">
-                        Due
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("due", e.clientX)}
-                        />
-                      </th>
-                      <th className="resizable-th">
-                        Period
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("period", e.clientX)}
-                        />
-                      </th>
-                      <th className="resizable-th">
-                        Actions
-                        <span
-                          className="resize-handle"
-                          onMouseDown={(e) => startResize("actions", e.clientX)}
-                        />
-                      </th>
+                <tbody>
+                  {visibleRows.map((task, index) => (
+                    <tr key={task.id}>
+                      <td>{index + 1}</td>
+                      <td>
+                        <span className={workflowClass(task.workflow)}>
+                          {task.workflow}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={categoryClass(task.category)}>
+                          {task.category}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={clientClass(task.client)}>{task.client}</span>
+                      </td>
+                      <td>{task.title}</td>
+                      <td>
+                        {currentView === "task-list" ? (
+                          <input
+                            type="date"
+                            className="due-date-input"
+                            value={task.due}
+                            onChange={(e) => updateDueDate(task.id, e.target.value)}
+                          />
+                        ) : (
+                          formatDisplayDate(task.due)
+                        )}
+                      </td>
+                      <td>
+                        <span className={cadenceClass(task.cadence)}>
+                          {task.cadence}
+                          {task.cadence === "Custom" && task.customDays
+                            ? ` (${task.customDays}d)`
+                            : ""}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={statusClass(task.status)}>{task.status}</span>
+                      </td>
+                      <td className="actions">
+                        <button className="ghost-small" onClick={() => openEditModal(task)}>
+                          Edit
+                        </button>
+
+                        {task.status === "On Hold" ? (
+                          <button
+                            className="ghost-small"
+                            onClick={() => moveToActive(task.id)}
+                          >
+                            Active
+                          </button>
+                        ) : (
+                          <button
+                            className="hold-btn"
+                            onClick={() => moveToOnHold(task.id)}
+                          >
+                            On Hold
+                          </button>
+                        )}
+
+                        <button
+                          className="done-btn"
+                          onClick={() => completeTask(task.id)}
+                          disabled={task.status === "Completed"}
+                        >
+                          Done
+                        </button>
+
+                        <button
+                          className="danger-btn"
+                          onClick={() => deleteTask(task.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
+                  ))}
 
-                  <tbody>
-                    {visibleRows.map((task, index) => (
-                      <tr key={task.id}>
-                        <td>{index + 1}</td>
-                        <td>
-                          <span className={clientClass(task.client)}>
-                            {task.client}
-                          </span>
-                        </td>
-                        <td>{task.title}</td>
-<td>
-  {currentView === "task-list" ? (
-    <input
-      type="date"
-      className="due-date-input"
-      value={task.due}
-      onChange={(e) => updateDueDate(task.id, e.target.value)}
-    />
-  ) : (
-    formatDisplayDate(task.due)
-  )}
-</td>
-                        <td>
-                          <span className={periodClass(task.period)}>
-                            {task.period}
-                          </span>
-                        </td>
-                        <td className="actions">
-                          {currentView === "on-hold" ? (
-                            <>
-                              <button
-                                className="ghost-small"
-                                onClick={() => moveToActive(task.id)}
-                              >
-                                Active
-                              </button>
-                              <button
-                                className="done-btn"
-                                onClick={() => completeTask(task.id)}
-                              >
-                                Done
-                              </button>
-                            </>
-                          ) : currentView === "task-list" ? (
-                            <>
-                              <button
-                                className="ghost-small"
-                                onClick={() => moveToActive(task.id)}
-                              >
-                                Active
-                              </button>
-                              <button
-                                className="danger-btn"
-                                onClick={() => deleteTask(task.id)}
-                              >
-                                Delete
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              className="danger-btn"
-                              onClick={() => deleteTask(task.id)}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-
-                    {visibleRows.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: "center", padding: 18 }}>
-                          No tasks found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  {visibleRows.length === 0 && (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: "center", padding: 18 }}>
+                        No tasks found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          </>
+          </div>
         )}
       </main>
 
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+      {(showAddModal || showEditModal) && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setShowAddModal(false);
+            setShowEditModal(false);
+            resetForm();
+          }}
+        >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Add New Task</h2>
-            <p>Task will be added to the master list as a recurring series item.</p>
+            <h2>{showEditModal ? "Edit Task" : "Add New Task"}</h2>
+            <p>
+              {showEditModal
+                ? "Update task details and recurrence settings."
+                : "Create a recurring task in the master system."}
+            </p>
+
+            <label>Workflow *</label>
+            <select
+              className="modal-input"
+              value={form.workflow}
+              onChange={(e) => setField("workflow", e.target.value as Workflow)}
+            >
+              {WORKFLOWS.map((workflow) => (
+                <option key={workflow} value={workflow}>
+                  {workflow}
+                </option>
+              ))}
+            </select>
+
+            <label>Category *</label>
+            <select
+              className="modal-input"
+              value={form.category}
+              onChange={(e) => setField("category", e.target.value as TaskCategory)}
+            >
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
 
             <label>Client *</label>
             <select
               className="modal-input"
               value={form.client}
-              onChange={(e) => setField("client", e.target.value)}
+              onChange={(e) => setField("client", e.target.value as ClientName)}
             >
-              <option value="">Select client</option>
-              <option value="Efes Produce">Efes Produce</option>
-              <option value="Bake Fusion">Bake Fusion</option>
-              <option value="Aygun Market">Aygun Market</option>
+              {CLIENTS.map((client) => (
+                <option key={client} value={client}>
+                  {client}
+                </option>
+              ))}
             </select>
 
             <label>Job Title *</label>
@@ -879,34 +1164,96 @@ const startResize = (
               </div>
 
               <div>
-                <label>Period *</label>
+                <label>Cadence *</label>
                 <select
                   className="modal-input"
-                  value={form.period}
-                  onChange={(e) => setField("period", e.target.value as Period)}
+                  value={form.cadence}
+                  onChange={(e) => setField("cadence", e.target.value as Cadence)}
                 >
-                  <option value="Weekly">Weekly</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Quarterly">Quarterly</option>
-                  <option value="Annual">Annual</option>
+                  {CADENCES.map((cadence) => (
+                    <option key={cadence} value={cadence}>
+                      {cadence}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            <label>Comments</label>
-            <input
+            {form.cadence === "Custom" && (
+              <>
+                <label>Custom Days *</label>
+                <input
+                  className="modal-input"
+                  type="number"
+                  min={1}
+                  value={form.customDays ?? 30}
+                  onChange={(e) =>
+                    setField("customDays", Number(e.target.value) || 1)
+                  }
+                  placeholder="Number of days"
+                />
+              </>
+            )}
+
+            <label>Due-Date Adjustment</label>
+            <select
               className="modal-input"
+              value={form.dueDateAdjustment}
+              onChange={(e) =>
+                setField(
+                  "dueDateAdjustment",
+                  e.target.value as DueDateAdjustment
+                )
+              }
+            >
+              {ADJUSTMENTS.map((adjustment) => (
+                <option key={adjustment} value={adjustment}>
+                  {adjustment}
+                </option>
+              ))}
+            </select>
+
+            {showEditModal && (
+              <>
+                <label>Status</label>
+                <select
+                  className="modal-input"
+                  value={form.status}
+                  onChange={(e) => setField("status", e.target.value as Status)}
+                >
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </>
+            )}
+
+            <label>Comments</label>
+            <textarea
+              className="modal-input"
+              rows={4}
               value={form.comments}
               onChange={(e) => setField("comments", e.target.value)}
               placeholder="Optional notes"
             />
 
             <div className="modal-actions">
-              <button className="ghost-btn" onClick={() => setShowAddModal(false)}>
+              <button
+                className="ghost-btn"
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                  resetForm();
+                }}
+              >
                 Cancel
               </button>
-              <button className="primary-btn" onClick={addTask}>
-                Add Task
+              <button
+                className="primary-btn"
+                onClick={showEditModal ? saveEdit : addTask}
+              >
+                {showEditModal ? "Save Changes" : "Add Task"}
               </button>
             </div>
           </div>
@@ -914,14 +1261,6 @@ const startResize = (
       )}
     </div>
   );
-}
-
-function createSeedTask(task: Omit<Task, "seriesKey" | "createdAt">): Task {
-  return {
-    ...task,
-    seriesKey: makeSeriesKey(task.client, task.title, task.period),
-    createdAt: new Date().toISOString(),
-  };
 }
 
 function loadTasks(): Task[] {
@@ -936,9 +1275,23 @@ function loadTasks(): Task[] {
     return sortTasks(
       parsed.map((task) => ({
         ...task,
+        workflow: task.workflow || "Payroll",
+        category: task.category || "Prepare & Generate Payroll",
+        client: task.client || "Efes Produce",
+        dueDateAdjustment: task.dueDateAdjustment || "None",
+        cadence: task.cadence || "Weekly",
+        customDays: task.cadence === "Custom" ? task.customDays || 30 : undefined,
         seriesKey:
           task.seriesKey ||
-          makeSeriesKey(task.client, task.title, task.period as Period),
+          makeSeriesKey({
+            workflow: task.workflow || "Payroll",
+            category: task.category || "Prepare & Generate Payroll",
+            client: task.client || "Efes Produce",
+            title: task.title || "",
+            cadence: task.cadence || "Weekly",
+            customDays: task.customDays || 30,
+            dueDateAdjustment: task.dueDateAdjustment || "None",
+          }),
         createdAt: task.createdAt || new Date().toISOString(),
       }))
     );
@@ -950,16 +1303,43 @@ function loadTasks(): Task[] {
 function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
 function formatDate(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-function makeSeriesKey(client: string, title: string, period: Period) {
-  return `${client.trim().toLowerCase()}__${title
-    .trim()
-    .toLowerCase()}__${period.toLowerCase()}`;
+
+function formatDisplayDate(dateStr: string) {
+  const [year, month, day] = dateStr.split("-");
+  return `${month}/${day}/${year}`;
+}
+
+function makeSeriesKey(task: {
+  workflow?: string;
+  category?: string;
+  client?: string;
+  title?: string;
+  cadence?: string;
+  customDays?: number;
+  dueDateAdjustment?: string;
+}) {
+  return [
+    task.workflow ?? "",
+    task.category ?? "",
+    task.client ?? "",
+    task.title ?? "",
+    task.cadence ?? "",
+    task.customDays ?? "",
+    task.dueDateAdjustment ?? "",
+  ]
+    .map((value) => String(value).trim().toLowerCase().replace(/\s+/g, "-"))
+    .join("|");
 }
 
 function getMonday(date: Date) {
@@ -985,23 +1365,56 @@ function isThisWeek(dateStr: string) {
   return due >= monday && due <= sunday;
 }
 
-function addPeriod(dateStr: string, period: Period) {
-  const date = new Date(`${dateStr}T00:00:00`);
+function isWeekend(date: Date) {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
 
-  if (period === "Weekly") {
-    date.setDate(date.getDate() + 7);
-  } else if (period === "Monthly") {
-    date.setMonth(date.getMonth() + 1);
-  } else if (period === "Quarterly") {
-    date.setMonth(date.getMonth() + 3);
-  } else {
-    date.setFullYear(date.getFullYear() + 1);
+function adjustToBusinessDay(date: Date, adjustment: DueDateAdjustment) {
+  const adjusted = new Date(date);
+
+  if (adjustment === "None") return adjusted;
+
+  while (isWeekend(adjusted)) {
+    if (adjustment === "Next Business Day") {
+      adjusted.setDate(adjusted.getDate() + 1);
+    } else {
+      adjusted.setDate(adjusted.getDate() - 1);
+    }
   }
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return adjusted;
+}
+
+function applyDueDateAdjustment(dateStr: string, adjustment: DueDateAdjustment) {
+  const raw = new Date(`${dateStr}T00:00:00`);
+  const adjusted = adjustToBusinessDay(raw, adjustment);
+  return formatDate(adjusted);
+}
+
+function addCadence(dateStr: string, cadence: Cadence, customDays?: number) {
+  const date = new Date(`${dateStr}T00:00:00`);
+
+  if (cadence === "Weekly") {
+    date.setDate(date.getDate() + 7);
+  } else if (cadence === "Monthly") {
+    date.setMonth(date.getMonth() + 1);
+  } else if (cadence === "Quarterly") {
+    date.setMonth(date.getMonth() + 3);
+  } else if (cadence === "Semi Annual") {
+    date.setMonth(date.getMonth() + 6);
+  } else if (cadence === "Annual") {
+    date.setFullYear(date.getFullYear() + 1);
+  } else {
+    date.setDate(date.getDate() + (customDays || 30));
+  }
+
+  return formatDate(date);
+}
+
+function getNextDueDate(task: Task) {
+  const nextRaw = addCadence(task.due, task.cadence, task.customDays);
+  return applyDueDateAdjustment(nextRaw, task.dueDateAdjustment);
 }
 
 export default App;
